@@ -31,6 +31,22 @@ let notes = [
   app.get('/api/persons', (req, res) => {
     res.json(notes)
   })
+  app.get('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    const note = notes.find(note => note.id === id)
+  
+    if ( note ) {
+      response.json(note)
+    } else {
+      response.status(404).end()
+    }
+  })
+  app.delete('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    notes = notes.filter(note => note.id !== id)
+  
+    response.status(204).end()
+  })
   
   const PORT = 3001
   app.listen(PORT, () => {
