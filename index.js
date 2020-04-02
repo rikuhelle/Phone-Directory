@@ -1,6 +1,8 @@
 
 const express = require('express')
 const app = express()
+const bodyParser = require('body-parser')
+app.use(bodyParser.json())
 let notes = [
     {
       name: "Arto Hellas",
@@ -46,6 +48,33 @@ let notes = [
     notes = notes.filter(note => note.id !== id)
   
     response.status(204).end()
+  })
+
+  const generateId = () => {
+    return Math.floor(Math.random() * 1000)
+  }
+  
+  app.post('/api/persons', (request, response) => {
+    const body = request.body
+    const arr = notes.map(note =>note.name)
+
+    if(arr.includes(body.name)){
+      return response.status(400).json({error: 'name already exists'})
+    }
+  
+    if (body.name === undefined || body.number === undefined) {
+      return response.status(400).json({error: 'name or number missing'})
+    }
+  
+    const note = {
+      name: body.name,
+      number: body.number,
+      id: generateId()
+    }
+  
+    notes = notes.concat(note)
+  
+    response.json(note)
   })
   
   const PORT = 3001
