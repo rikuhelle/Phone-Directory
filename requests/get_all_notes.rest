@@ -1,1 +1,1 @@
-GET http://localhost:3001/api/persons
+GET https://shielded-lowlands-42135.herokuapp.com/api/persons
