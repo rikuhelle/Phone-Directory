@@ -6,6 +6,16 @@ app.use(bodyParser.json())
 const cors = require('cors')
 app.use(cors())
 app.use(express.static('build'))
+const Person = require('./models/person')
+
+
+const formatPerson = (person) => {
+  return {
+    name: person.name,
+    number: person.number,
+    id: person._id
+  }
+}
 
 let notes = [
     {
@@ -34,24 +44,36 @@ let notes = [
     res.send('<h1>Hello World!</h1>')
   })
   
-  app.get('/api/persons', (req, res) => {
-    res.json(notes)
+  app.get('/api/persons', (request, response) => {
+    Person
+      .find({},{__v: 0})
+      .then(persons => {
+        response.json(persons.map(formatPerson))
+      })
   })
   app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const note = notes.find(note => note.id === id)
-  
-    if ( note ) {
-      response.json(note)
-    } else {
-      response.status(404).end()
-    }
+    Person
+      .findById(request.params.id)
+      .then(person => {
+        if(person){
+        response.json(formatPerson(person))
+        }else{
+          response.status(404).end()
+        }
+      }).catch(error => {
+        console.log(error)
+        response.status(400).send({error:'malformatted id'})
+      })
   })
   app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    notes = notes.filter(note => note.id !== id)
-  
-    response.status(204).end()
+    Person
+      .findByIdAndRemove(request.params.id)
+      .then(result => {
+        response.status(204).end()
+      })
+      .catch(error => {
+        response.status(400).send({ error: 'malformatted id' })
+      })
   })
 
   const generateId = () => {
@@ -60,25 +82,18 @@ let notes = [
   
   app.post('/api/persons', (request, response) => {
     const body = request.body
-    const arr = notes.map(note =>note.name)
-
-    if(arr.includes(body.name)){
-      return response.status(400).json({error: 'name already exists'})
-    }
   
-    if (body.name === undefined || body.number === undefined) {
-      return response.status(400).json({error: 'name or number missing'})
-    }
-  
-    const note = {
+    const person = new Person({
       name: body.name,
       number: body.number,
       id: generateId()
-    }
+    })
   
-    notes = notes.concat(note)
-  
-    response.json(note)
+    person
+    .save()
+    .then(savedNote => {
+      response.json(formatPerson(savedNote))
+    })
   })
   
   const PORT = process.env.PORT || 3001
